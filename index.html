@@ -1,146 +1,300 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="google-site-verification" content="4U4miU3Gsc0UAXRYGq5Y5ezYuwDvyN93D19iR8COO4E" />
-      <meta name="description" content="ブラウザ上で動くiPhone風電話アプリ。数字入力・発信・自動音声Bot応答。簡単にGitHub Pagesで公開可能です。">
-   <link rel="canonical" href="https://dog-sudo.github.io/iphone-phone-web/">
- <meta name="robots" content="index, follow">
-    <!-- 任意: キーワードや作者情報 -->
-    <meta name="keywords" content="iPhone, Web電話, GitHub Pages, JavaScript, TTS">
-    <meta name="author" content="やん　ちぇんゆ">
-<title>iPhone風電話アプリ</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ちょっと怖いページ</title>
 <style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: #f0f0f0;
+  :root{
+    --bg:#060608;
+    --fg:#d6d6d8;
+    --accent:#9b2b2b;
   }
-
-  .phone {
-    width: 300px;
-    height: 500px;
-    background: white;
-    border-radius: 40px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:var(--bg);color:var(--fg);}
+  .center{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+  .card{max-width:700px;padding:32px;text-align:center;border-radius:12px;backdrop-filter:blur(6px);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 6px 30px rgba(0,0,0,0.6);}
+  h1{margin:0 0 6px 0;font-size:28px;letter-spacing:0.6px}
+  p{margin:0;color: #bdbec0}
+  button{appearance:none;padding:12px 20px;border-radius:10px;border:2px solid rgba(255,255,255,0.06);background:transparent;color:var(--fg);cursor:pointer;font-weight:600}
+  button#start{font-size:18px;padding:14px 28px;background:linear-gradient(90deg,#111 0%, #222 100%);border-color:rgba(155,43,43,0.9)}
+  .hidden{display:none}
+  /* creepy text area */
+  #crawl{width:100%;height:220px;overflow:hidden;border-radius:8px;padding:18px;text-align:left;background:rgba(0,0,0,0.35);box-shadow:inset 0 0 60px rgba(0,0,0,0.6);font-family: "Courier New", Courier, monospace;line-height:1.6;font-size:15px;color:#d6d6d8}
+  /* full-screen scare overlay */
+  #scareOverlay{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:999;opacity:0;pointer-events:none;transition:opacity 220ms ease;
   }
-
-  .screen {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
-    box-sizing: border-box;
+  #scareOverlay.show{opacity:1;pointer-events:auto;}
+  /* scary SVG face */
+  .face{
+    width:70vmin;max-width:980px;transform:scale(0.8);transition:transform 220ms cubic-bezier(.2,.9,.3,1);
+    filter: drop-shadow(0 30px 40px rgba(0,0,0,0.7));
   }
-
-  .display {
-    height: 80px;
-    font-size: 30px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #eee;
-    border-radius: 20px;
-    margin-bottom: 20px;
+  .face.big{transform:scale(1.05) rotate(-2deg);}
+  /* calm button */
+  .calm{
+    position:fixed;right:18px;bottom:18px;z-index:1100;padding:10px 14px;border-radius:8px;background:#111;color:var(--fg);border:1px solid rgba(255,255,255,0.04);cursor:pointer;
   }
-
-  .keypad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
+  /* subtle pulsing shadow behind face */
+  .pulse {
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    z-index:998;pointer-events:none;
   }
-
-  .key {
-    background: #ddd;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s;
+  .pulse::before{
+    content:"";width:60vmin;height:60vmin;border-radius:50%;background:radial-gradient(circle, rgba(155,43,43,0.07), rgba(0,0,0,0));
+    transform:scale(0.8);opacity:0;transition:opacity 600ms ease; z-index:997;
   }
-
-  .key:active {
-    background: #bbb;
-  }
-
-  .call-btn {
-    margin-top: 20px;
-    background: green;
-    color: white;
-    font-size: 20px;
-    text-align: center;
-    padding: 15px;
-    border-radius: 30px;
-    cursor: pointer;
-    user-select: none;
+  #scareOverlay.show .pulse::before{opacity:1;transform:scale(1);}
+  /* small text flicker (not flashing) */
+  .whisper{opacity:0.04;font-size:14px;margin-top:10px}
+  @media (max-width:600px){
+    .card{padding:20px}
+    .face{width:92vmin}
   }
 </style>
 </head>
 <body>
-<div class="phone">
-  <div class="screen">
-    <div class="display" id="display">---</div>
-    <div class="keypad">
-      <div class="key">1</div>
-      <div class="key">2</div>
-      <div class="key">3</div>
-      <div class="key">4</div>
-      <div class="key">5</div>
-      <div class="key">6</div>
-      <div class="key">7</div>
-      <div class="key">8</div>
-      <div class="key">9</div>
-      <div class="key">*</div>
-      <div class="key">0</div>
-      <div class="key">#</div>
-    </div>
-    <div class="call-btn" id="callBtn">発信</div>
+<div class="center">
+  <div class="card" id="introCard">
+    <h1>ここは安全な実験場…のはず</h1>
+    <p>クリックで始まります。音が出ます。心臓が弱いならやめて。怖がらせたいって言った君が悪い。</p>
+    <div style="height:18px"></div>
+    <button id="start">START — Enter the room</button>
+    <div style="height:18px"></div>
+    <div id="crawl" aria-live="polite"></div>
+    <div class="whisper">ヒント: じっと待っていると何かが近づくかも。</div>
   </div>
 </div>
 
+<!-- overlay that will show the face -->
+<div id="scareOverlay" role="dialog" aria-hidden="true">
+  <div class="pulse"></div>
+  <!-- SVG is original, non-graphic -->
+  <svg class="face" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <radialGradient id="g" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+        <stop offset="45%" stop-color="#f2eaeb" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#6a0b0b" stop-opacity="0.95"/>
+      </radialGradient>
+    </defs>
+    <rect width="800" height="800" rx="40" fill="url(#g)"/>
+    <!-- eyes -->
+    <g transform="translate(0,60)">
+      <ellipse cx="260" cy="320" rx="70" ry="110" fill="#060608"/>
+      <ellipse cx="540" cy="320" rx="70" ry="110" fill="#060608"/>
+      <circle cx="260" cy="360" r="18" fill="#fff"/>
+      <circle cx="540" cy="360" r="18" fill="#fff"/>
+    </g>
+    <!-- mouth -->
+    <path d="M220 520 C310 630, 490 630, 580 520 C500 600, 300 600, 220 520 Z" fill="#060608"/>
+    <!-- subtle cracks -->
+    <g stroke="#3a0a0a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+      <path d="M160 180 C220 220,200 300,240 340"/>
+      <path d="M640 180 C580 220,600 300,560 340"/>
+      <path d="M340 120 C360 200,420 200,460 120"/>
+    </g>
+  </svg>
+</div>
+
+<button class="calm hidden" id="calmBtn">CALM — STOP</button>
+
 <script>
-  const display = document.getElementById("display");
-  const keys = document.querySelectorAll(".key");
-  const callBtn = document.getElementById("callBtn");
+/*
+  シンプルな「怖がらせ」演出。
+  - ユーザークリックで開始（ブラウザの自動再生ブロック回避）
+  - 背景の低音ハムをWebAudioでじわっと上げる
+  - テキストがゆっくり表示され、最後にジャンプスケア（視覚＋音）
+  - CALMボタンで即停止（音をフェードアウトし、オーバーレイ消去）
+*/
 
-  let number = "";
+const startBtn = document.getElementById('start');
+const crawl = document.getElementById('crawl');
+const overlay = document.getElementById('scareOverlay');
+const face = document.querySelector('.face');
+const calm = document.getElementById('calmBtn');
 
-  keys.forEach(key => {
-    key.addEventListener("click", () => {
-      if(number.length < 15){
-        number += key.textContent;
-        display.textContent = number;
-      }
-    });
-  });
+let audioCtx, masterGain, humOsc, noiseNode;
+let scareTimeouts = [];
+let started = false;
 
-  callBtn.addEventListener("click", () => {
-    if(number === "") return;
-    display.textContent = `発信中: ${number}...`;
+function safeRandom(min,max){ return Math.random()*(max-min)+min; }
 
-    // Botによる自動応答（Web Speech API）
-    setTimeout(() => {
-      display.textContent = `通話中: ${number}`;
-      const msg = new SpeechSynthesisUtterance();
-      msg.text = "こんにちは、こちらは自動応答システムです。ご用件をどうぞ。";
-      msg.lang = 'ja-JP';
-      window.speechSynthesis.speak(msg);
-    }, 2000);
-  });
+function appendLine(text, delay=0){
+  const t = setTimeout(()=> {
+    // typewriter effect
+    let i=0;
+    const lineEl = document.createElement('div');
+    crawl.appendChild(lineEl);
+    const ti = setInterval(()=>{
+      lineEl.textContent += text[i]||'';
+      i++;
+      if(i>text.length) clearInterval(ti);
+      crawl.scrollTop = crawl.scrollHeight;
+    }, 18);
+  }, delay);
+  scareTimeouts.push(t);
+}
+
+function makeAudio(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.0001; // near silent start
+  masterGain.connect(audioCtx.destination);
+
+  // low rumble
+  humOsc = audioCtx.createOscillator();
+  humOsc.type = 'sine';
+  humOsc.frequency.value = 55; // low bass
+  const humGain = audioCtx.createGain();
+  humGain.gain.value = 0.0;
+  humOsc.connect(humGain).connect(masterGain);
+  humOsc.start();
+
+  // noise source for texture (not too harsh)
+  const bufferSize = 2*audioCtx.sampleRate;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = (Math.random()*2-1) * 0.4;
+  }
+  noiseNode = audioCtx.createBufferSource();
+  noiseNode.buffer = noiseBuffer;
+  noiseNode.loop = true;
+  const noiseFilter = audioCtx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = 1200;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.value = 0.0;
+  noiseNode.connect(noiseFilter).connect(noiseGain).connect(masterGain);
+  noiseNode.start();
+}
+
+function rampGainTo(value, timeMs){
+  const now = audioCtx.currentTime;
+  masterGain.gain.cancelScheduledValues(now);
+  masterGain.gain.linearRampToValueAtTime(value, now + timeMs/1000);
+}
+
+function playScream(){
+  // build a short "scream" from filtered noise + high oscillator chirp
+  const now = audioCtx.currentTime;
+  // high chirp
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(300, now);
+  osc.frequency.exponentialRampToValueAtTime(1600, now + 0.25);
+  const ogain = audioCtx.createGain();
+  ogain.gain.setValueAtTime(0.001, now);
+  ogain.gain.exponentialRampToValueAtTime(0.4, now + 0.04);
+  ogain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+  osc.connect(ogain).connect(masterGain);
+  osc.start(now);
+  osc.stop(now + 0.5);
+
+  // short burst of filtered noise
+  const burst = audioCtx.createBufferSource();
+  const bruf = audioCtx.createBuffer(1, audioCtx.sampleRate*1, audioCtx.sampleRate);
+  const out = bruf.getChannelData(0);
+  for(let i=0;i<out.length;i++) out[i] = (Math.random()*2-1);
+  surge = audioCtx.createBiquadFilter();
+  surge.type = 'bandpass';
+  surge.frequency.value = 900;
+  const sg = audioCtx.createGain();
+  sg.gain.setValueAtTime(0.001, now);
+  sg.gain.exponentialRampToValueAtTime(0.6, now + 0.02);
+  sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+  burst.buffer = bruf;
+  burst.connect(surge).connect(sg).connect(masterGain);
+  burst.start(now);
+  burst.stop(now + 0.45);
+}
+
+function doScareSequence(){
+  overlay.setAttribute('aria-hidden','false');
+  overlay.classList.add('show');
+  calm.classList.remove('hidden');
+  // small scale animation
+  setTimeout(()=>face.classList.add('big'), 60);
+
+  // lift ambient to noticeable level then trigger scream
+  rampGainTo(0.06, 400); // gentle rise
+  // timing for jump-scare
+  setTimeout(()=> {
+    playScream();
+    // quick grow effect
+    face.classList.add('big');
+    setTimeout(()=> face.classList.remove('big'), 900);
+  }, 1400);
+}
+
+function stopAll(){
+  // clear timeouts
+  scareTimeouts.forEach(t=>clearTimeout(t));
+  scareTimeouts = [];
+  // hide overlay
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  face.classList.remove('big');
+  // fade out sound
+  if(masterGain){
+    const now = audioCtx.currentTime;
+    masterGain.gain.cancelScheduledValues(now);
+    masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.25);
+  }
+  calm.classList.add('hidden');
+}
+
+// main start
+startBtn.addEventListener('click', async ()=> {
+  if(started) return;
+  started = true;
+  startBtn.disabled = true;
+  // create audio context on user gesture
+  makeAudio();
+
+  // small ambient fade-in
+  rampGainTo(0.002, 350);
+  // populate creepy text progressively
+  appendLine("ドアが…軋んだ。", 400);
+  appendLine("君は中を覗き込む。空気が冷たい。", 1600);
+  appendLine("何かが肩越しに息をした気がする。", 4000);
+  appendLine("振り向くほど勇気があるか？", 7200);
+  appendLine("…君はまだ座っている。", 10200);
+  appendLine("静かに、近づく。", 13000);
+  appendLine("もうすぐだ。", 16300);
+
+  // small increase in rumble as tension
+  setTimeout(()=> {
+    if(audioCtx) rampGainTo(0.02, 1000);
+  }, 11000);
+
+  // final lines then scare
+  setTimeout(()=> {
+    appendLine("…見て。", 0);
+  }, 16600);
+
+  // trigger final scare shortly after
+  setTimeout(()=> {
+    doScareSequence();
+  }, 17800);
+});
+
+// calm button
+calm.addEventListener('click', ()=> {
+  stopAll();
+});
+
+// also allow clicking overlay to stop
+overlay.addEventListener('click', ()=> {
+  stopAll();
+});
+
+// safety: stop audio if user leaves page
+window.addEventListener('pagehide', ()=> {
+  if(audioCtx) audioCtx.close && audioCtx.close();
+});
 </script>
 </body>
 </html>
